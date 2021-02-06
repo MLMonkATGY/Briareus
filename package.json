@@ -1,0 +1,56 @@
+{
+    "name": "dashboard_spy_nodejs_node",
+    "version": "1.0.0",
+    "main": "Serve.js",
+    "type": "module",
+    "scripts": {
+        "dev": "ts-node src/Serve.ts",
+        "start": "ts-node out/Serve.js",
+        "build": "tsc -p  . ",
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/alextaygeeyang/dashboard_spy_nodejs_node.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/alextaygeeyang/dashboard_spy_nodejs_node/issues"
+    },
+    "homepage": "https://github.com/alextaygeeyang/dashboard_spy_nodejs_node#readme",
+    "dependencies": {
+        "@mikro-orm/cli": "^4.3.4",
+        "@mikro-orm/core": "^4.3.4",
+        "@mikro-orm/postgresql": "^4.3.4",
+        "@mikro-orm/reflection": "^4.3.4",
+        "@types/body-parser": "^1.19.0",
+        "@types/bonjour": "^3.5.8",
+        "@types/event-emitter": "^0.3.3",
+        "@types/express": "^4.17.8",
+        "@types/node-fetch": "^2.5.7",
+        "@types/socket.io": "^2.1.11",
+        "@types/underscore": "^1.10.24",
+        "body-parser": "^1.19.0",
+        "bonjour": "^3.5.0",
+        "cors": "^2.8.5",
+        "express": "^4.17.1",
+        "is-corrupted-jpeg": "^1.0.2",
+        "node-fetch": "^2.6.1",
+        "pg": "^8.5.1",
+        "playwright": "^1.8.0",
+        "png-validator": "^1.0.0",
+        "socket.io": "^2.3.0",
+        "ts-node": "^9.1.1",
+        "typeorm": "^0.2.30",
+        "typeorm-seeding": "^1.6.1",
+        "underscore": "^1.12.0"
+    },
+    "description": "",
+    "devDependencies": {
+        "@types/cors": "^2.8.8",
+        "@types/faker": "^5.1.5",
+        "tsconfig-paths": "^3.9.0"
+    }
+}
