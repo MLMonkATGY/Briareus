@@ -1,7 +1,7 @@
 import { spawn } from "child_process";
 import SocketStore from "Singleton/SocketStore";
 import iRepeatJobBase from "../Interfaces/IRepeatJobBase.interface";
-import { firefox, Browser, Page, BrowserContext, Request, Route } from "playwright";
+import { firefox,chromium, Browser, Page, BrowserContext, Request, Route } from "playwright";
 import path from "path";
 import { EntityManager, EntityRepository, MikroORM } from "@mikro-orm/core";
 import getEntityManager from "../Db/GetDbSettings.js";
@@ -22,6 +22,7 @@ class GenericCrawler implements iCrawlerJob {
   private totalPayloadNum : number;
   public dbOrmConnection : any;
   public saveToDbInterval : any;
+  public closePageEachRequest : boolean;
   public orm : any;
     public repo:any;
   constructor() {
@@ -89,7 +90,26 @@ class GenericCrawler implements iCrawlerJob {
 
     return allBrowserContext
   }
+  public generateBrowserContext2 = async (browserInstance: number, headless:boolean): Promise<BrowserContext[]> => {
+    let allBrowserContextP = []
+    for (let i = 0; i < browserInstance; i++) {
 
+      
+
+      const browser =  chromium.launch( {
+        headless: headless,
+      });
+      allBrowserContextP.push(browser)
+    }
+    const allBrowserContext = await Promise.all(allBrowserContextP)
+    // allBrowserContext.forEach(elem=>{
+    //   elem.setDefaultTimeout(60000)
+
+    // })
+
+
+    return allBrowserContext
+  }
   public atomicPageLevelExecutor = async (page: Page, link: string, resolve, reject, repo) => {
    
 
@@ -137,7 +157,13 @@ class GenericCrawler implements iCrawlerJob {
       this.atomicPageLevelExecutor(page, link, resolve, reject, repo)
     })
   }
- 
+   public interceptImages = async(page)=>{
+    page.route('**/*', (route:Route) => {
+     return route.request().resourceType() === 'image'
+       ? route.abort()
+       : route.continue()
+   })
+ }
   public pageScheduler = async (browser: BrowserContext, payload: string[], em:EntityManager) => {
     
     return new Promise(async (resolve, reject) => {
@@ -157,19 +183,26 @@ class GenericCrawler implements iCrawlerJob {
         allPromiseInCurrentRound.push(this.pageWorker(p, link,repo))
         pageOpened++
       }
-      console.log(`This browser opened ${pageOpened} pages`)
-      let kk = await Promise.all(allPromiseInCurrentRound)
-      let closingPromises = []
-      for (let j = 0; j < allPages.length; j++) {
-        closingPromises.push(allPages[j].close())
-      }
-      await Promise.all(closingPromises).catch((err) => {
-        console.log(err)
-        resolve(true)
 
-      })
+      console.log(`This browser opened ${pageOpened} pages`)
+      // await Promise.all(allPromiseInCurrentRound)
+      
+      if(this.closePageEachRequest){
+        let closingPromises = []
+        for (let j = 0; j < allPages.length; j++) {
+          closingPromises.push(allPages[j].close())
+        }
+        await Promise.all(closingPromises).catch((err) => {
+          console.log(err)
+          resolve(true)
+  
+        })
+      }else{
+        console.log("No resolving browser. Reused page for each request")
+      }
+  
      
-      resolve(true)
+      // resolve(true)
     })
 
 
@@ -241,7 +274,7 @@ class GenericCrawler implements iCrawlerJob {
    
     const finalPayloads = ["https://www.youtube.com/watch?v=onMD8tvnLbs", "https://www.youtube.com/watch?v=7aipxljwrZQ"]
     let allBrowser:BrowserContext[] = await this.generateBrowserContext(2, false )
-
+    
     await this.downloadThumbnail(allBrowser, 2, finalPayloads)
 
     console.log("=================All DONE===========================")
