@@ -16,6 +16,7 @@ import Author from "./Entity/Author.js";
 import {default as setup} from "./Seed/CreateSchema.js";
 import SeedWhiteList from "./Seed/SeedAuthor.js"
 import setupSchema from "./Seed/CreateSchema.js";
+import iCrawlerJob from "Interfaces/iCrawlerJob.interface.js";
 class App {
   public app: Application;
   public port: number;
@@ -29,12 +30,15 @@ class App {
   public socketEventMaps: Map<string, Function>;
   public GlobalEventEmitter: any;
   public dbconnection : any
+  public crawlerHandler : any
+
   constructor(appInit: {
     port: number;
     middleware: any;
     controller: any;
     websocketHandler: Array<IEventHandlerBase>;
     jobHandler: any;
+    crawlerHandler : Array<iCrawlerJob>
   }) {
     this.app = express();
     this.port = appInit.port;
@@ -42,7 +46,7 @@ class App {
     //middleware needs to be init before router
     this.socketStore = new SocketStore();
     this.GlobalEventEmitter = new EventEmitter.EventEmitter();
-
+    this.crawlerHandler = appInit.crawlerHandler
     this.middlewares(appInit.middleware)
     this.routes(appInit.controller);
 
@@ -80,19 +84,11 @@ class App {
       this.socketEventMaps.get("disconnect")(data, clientSocket, this.socketStore)
     })
   };
-
+  
   private registerIntervalJobs = async (jobs: {
     forEach: (arg0: (job: any) => void) => void;
   }) => {
-   const conn = await MikroORM.init( {
-
-    entities: [Doujinshi, Author],
-    dbName: 'alextay96',
-    type: 'postgresql',
-    clientUrl: 'postgresql://alextay96@127.0.0.1:5432',
-    user: 'alextay96',
-    password: "Iamalextay96" // defaults to 'mongodb://localhost:27017' for mongodb driver
-});
+ 
   // const repo = conn.em.getRepository(Author);
   // let a = await repo.count()
     jobs.forEach((job: iRepeatJobBase) => {
@@ -136,6 +132,9 @@ class App {
 
       //  });
       console.log(`App listening on the http://0.0.0.0:${this.port}`);
+      this.crawlerHandler.forEach((element:iCrawlerJob) => {
+          element.topLevelTaskScheduler()
+      });
     });
   }
 }
