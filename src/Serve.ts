@@ -13,7 +13,7 @@ import PreviewThumbnail from "./Jobs/PreviewThumbnail.js";
 import DownloadThumbnail from "./Jobs/DownloadThumbnail.js";
 import FilterResources from "./Jobs/FilterEmptyFolder.js";
 import GenericCrawler from "./Crawler/GenericCrawler.js";
-import youtube from "./Crawler/youtube.js";
+import ExploreChannels from "./Crawler/ExploreChannels.js";
 
   
 const app: App = new App({
@@ -39,7 +39,7 @@ const app: App = new App({
       // new FilterResources()
     ],
     crawlerHandler : [
-      new youtube()
+      new ExploreChannels()
     ]
   });
 

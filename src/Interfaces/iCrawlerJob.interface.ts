@@ -6,6 +6,7 @@ interface iCrawlerJob {
     saveToDbInterval : number;
     orm:any;
     repo : any;
+    closePageEachRequest : boolean
     setOrmConn():Promise<MikroORM<IDatabaseDriver<Connection>>>;
     generateBrowserContext(browserInstance: number, headless:boolean): Promise<BrowserContext[]>;
      topLevelTaskScheduler():Promise<any>
