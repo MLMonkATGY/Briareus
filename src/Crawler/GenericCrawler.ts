@@ -12,6 +12,8 @@ import _ from "underscore";
 import DoujinInfo from "../Entity/DoujinInfo.js";
 import Tags from "../Entity/Tags.js";
 import iCrawlerJob from "Interfaces/iCrawlerJob.interface";
+import Channels from "../Entity/Channels.js";
+
 class GenericCrawler implements iCrawlerJob {
   private intervalUpdate: number;
   private socketStore: SocketStore;
@@ -20,16 +22,26 @@ class GenericCrawler implements iCrawlerJob {
   private totalPayloadNum : number;
   public dbOrmConnection : any;
   public saveToDbInterval : any;
+  public orm : any;
+    public repo:any;
   constructor() {
-    this.rejectedNum = 0;
-    this.succeedNum = 0;
-    this.totalPayloadNum = 0;
-
+    
   }
-  public linkStore = (store: SocketStore) => {
-    this.socketStore = store;
 
-  }
+  public  setOrmConn = async ()=>{
+    const orm = await MikroORM.init({
+            entities: [Channels],
+            dbName: 'alextay96',
+            type: 'mongo'
+          });
+    // const em = orm.em.fork();
+    this.orm = orm
+    return orm
+    // return em;
+    }  
+    public persistConfig = async ()=>{
+         
+    }
  
   public getUserPrefString = (port: number) => {
     return `
@@ -78,7 +90,7 @@ class GenericCrawler implements iCrawlerJob {
     return allBrowserContext
   }
 
-  public atomicPageLevelExecutor = async (page: Page, link: string, resolve, reject) => {
+  public atomicPageLevelExecutor = async (page: Page, link: string, resolve, reject, repo) => {
    
 
      const resp = await page.goto(link).catch((e) => {
@@ -120,9 +132,9 @@ class GenericCrawler implements iCrawlerJob {
       }, timeout);
     })
   }
-  public pageWorker = async (page: Page, link: string, repo: EntityRepository<DoujinInfo>, cacheEm) => {
+  public pageWorker = async (page: Page, link: string, repo) => {
     return new Promise((resolve, reject) => {
-      this.atomicPageLevelExecutor(page, link, resolve, reject)
+      this.atomicPageLevelExecutor(page, link, resolve, reject, repo)
     })
   }
  
@@ -132,7 +144,7 @@ class GenericCrawler implements iCrawlerJob {
       
       // const em = await getEntityManager()
       
-      const repo = em.getRepository<DoujinInfo>(DoujinInfo);
+      const repo = this.repo;
       let allPromiseInCurrentRound = []
       let allPages: Page[] = []
       let pageOpened: number = 0;
@@ -142,7 +154,7 @@ class GenericCrawler implements iCrawlerJob {
         allPages.push(p)
         // this.interceptImages(p)
         // const cacheEM = await getEntityManager()
-        allPromiseInCurrentRound.push(this.pageWorker(p, link, repo, em))
+        allPromiseInCurrentRound.push(this.pageWorker(p, link,repo))
         pageOpened++
       }
       console.log(`This browser opened ${pageOpened} pages`)
@@ -172,33 +184,21 @@ class GenericCrawler implements iCrawlerJob {
 
 
 
-
+  public setRepo = async(repo)=>{
+    this.repo = repo
+  }
 
   public downloadThumbnail = async (allBrowser: BrowserContext[], pagenum: number, payloads: string[]) => {
    
-
+    await this.persistConfig()
     const totalPayloads = _.chunk(payloads, pagenum)
 
     let browserRole = this.makeRepeated(_.range(allBrowser.length), Math.round(totalPayloads.length / allBrowser.length))
     browserRole = _.flatten(browserRole)
     console.log(`packs of totalPayloads = ${totalPayloads.length}`)
     console.log(`req per payload = ${totalPayloads[0].length}`)
-    const orm = await MikroORM.init({
-      entities: [Author, Tags,Doujinshi, DoujinInfo],
-      dbName: 'alextay96',
-      type: 'postgresql',
-      clientUrl: 'postgresql://alextay96@127.0.0.1:5432',
-      user: 'alextay96',
-      password: "Iamalextay96"
-    });
-    setInterval(async()=>{
-      await orm.em.flush().catch(err=>{
-        console.log("Flush reject")
-        console.log(err)
-
-      })
-      console.log("Flushed persisted entity")
-    }, 10000)
+    const orm = await this.setOrmConn()
+   
     let i = 0;
     while (i < totalPayloads.length) {
       let allPromise = []

@@ -23,6 +23,7 @@
     "dependencies": {
         "@mikro-orm/cli": "^4.3.4",
         "@mikro-orm/core": "^4.3.4",
+        "@mikro-orm/mongodb": "^4.4.2",
         "@mikro-orm/postgresql": "^4.3.4",
         "@mikro-orm/reflection": "^4.3.4",
         "@types/body-parser": "^1.19.0",

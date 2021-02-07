@@ -8,26 +8,43 @@ import getEntityManager from "../Db/GetDbSettings.js";
 import fs from "fs";
 import Doujinshi from "../Entity/Doujinshi.js";
 import Author from "../Entity/Author.js";
-import _ from "underscore";
+import _, { random } from "underscore";
 import DoujinInfo from "../Entity/DoujinInfo.js";
 import Tags from "../Entity/Tags.js";
 import iCrawlerJob from "Interfaces/iCrawlerJob.interface";
 import GenericCrawler from "./GenericCrawler.js";
+import Channels from "../Entity/Channels.js";
 class youtube extends GenericCrawler {
  
   public dbOrmConnection : any;
   public saveToDbInterval : any;
+  public orm : any;
+  public repo:any;
   constructor() {
       super()
-  
+      this.saveToDbInterval = 3000
 
   }
  
- 
+  public  setOrmConn = async ()=>{
+    const orm = await MikroORM.init({
+        entities: [Channels],
+        dbName: 'alextay96',
+        type: 'postgresql',
+        clientUrl: 'postgresql://alextay96@127.0.0.1:5432',
+        user: 'alextay96',
+        password: "Iamalextay96"
+      });
+    // const em = orm.em.fork();
+    this.orm = orm
+    return orm
+    // return em;
+}
 
   public atomicPageLevelExecutor = async (page: Page, link: string, resolve, reject) => {
    
-
+    const aasda = new Channels(Math.random().toString(), "asda");
+    this.repo.persist(aasda);
      const resp = await page.goto(link).catch((e) => {
       if (e.message.includes("Navigation failed because page was closed!")) {
         return
@@ -44,14 +61,18 @@ class youtube extends GenericCrawler {
     })
     if(resp){
         try {
+            
             console.log(resp)
             resolve(true);
+            const aasda = new Channels(Math.random().toString(), "asda");
+            this.repo.persist(aasda);
         }        
         catch (error) {
           console.log(error)
           resolve(true);
 
       }
+    //   console.log("hee")
 
       // console.log(image)
     }
@@ -70,72 +91,24 @@ class youtube extends GenericCrawler {
 
 
 
-  public downloadThumbnail = async (allBrowser: BrowserContext[], pagenum: number, payloads: string[]) => {
-   
+  
 
-    const totalPayloads = _.chunk(payloads, pagenum)
-
-    let browserRole = this.makeRepeated(_.range(allBrowser.length), Math.round(totalPayloads.length / allBrowser.length))
-    browserRole = _.flatten(browserRole)
-    console.log(`packs of totalPayloads = ${totalPayloads.length}`)
-    console.log(`req per payload = ${totalPayloads[0].length}`)
-    const orm = await MikroORM.init({
-      entities: [Author, Tags,Doujinshi, DoujinInfo],
-      dbName: 'alextay96',
-      type: 'postgresql',
-      clientUrl: 'postgresql://alextay96@127.0.0.1:5432',
-      user: 'alextay96',
-      password: "Iamalextay96"
-    });
+   public persistConfig = async ()=>{
+    const orm = await this.setOrmConn()
+    this.repo = (await orm).em.getRepository<Channels>(Channels);
     setInterval(async()=>{
-      await orm.em.flush().catch(err=>{
-        console.log("Flush reject")
-        console.log(err)
-
-      })
-      console.log("Flushed persisted entity")
-    }, 10000)
-    let i = 0;
-    while (i < totalPayloads.length) {
-      let allPromise = []
-
-      for (let j = 0; j < allBrowser.length; j++) {
-        //Deep copy the payload to avoid sometimes the payload is undefined due to async access
-        try {
-          const currentBrowser = allBrowser[browserRole[j]]
-
-          const currentPayload = JSON.parse(JSON.stringify(totalPayloads[i]));
-
-          let a = this.pageScheduler(currentBrowser, currentPayload, orm.em)
-          allPromise.push(a)
-          i++;
-        } catch (error) {
-          console.log(error)
-          continue          
-
-        }
-        
-      }
-      console.log("waiting for this round of request to resolve")
-      try {
-        await Promise.all(allPromise).catch((err) => {
+        await orm.em.flush().catch(err=>{
+          console.log("Flush reject")
           console.log(err)
-          
-        })   
-      } catch (error) {
-        console.log("Exception")
-      }
-     
-      // await repo.flush()
-      allPromise = []
-
-    }
-
-  }
-
+  
+        })
+        console.log("Flushed persisted entity")
+      }, this.saveToDbInterval )   
+}
   public topLevelTaskScheduler = async () => {
    
     const finalPayloads = ["https://www.youtube.com/watch?v=onMD8tvnLbs", "https://www.youtube.com/watch?v=7aipxljwrZQ"]
+   
     let allBrowser:BrowserContext[] = await this.generateBrowserContext(2, false )
 
     await this.downloadThumbnail(allBrowser, 2, finalPayloads)
