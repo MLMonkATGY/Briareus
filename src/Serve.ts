@@ -12,6 +12,8 @@ import DownloadLinksByArtist from "./Jobs/DownloadLinksByArtist.js";
 import PreviewThumbnail from "./Jobs/PreviewThumbnail.js";
 import DownloadThumbnail from "./Jobs/DownloadThumbnail.js";
 import FilterResources from "./Jobs/FilterEmptyFolder.js";
+import GenericCrawler from "./Crawler/GenericCrawler.js";
+import youtube from "./Crawler/youtube.js";
 
   
 const app: App = new App({
@@ -36,6 +38,9 @@ const app: App = new App({
       // new DownloadThumbnail(),
       // new FilterResources()
     ],
+    crawlerHandler : [
+      new youtube()
+    ]
   });
 
 app.listen();
