@@ -7,12 +7,13 @@ import Tags from "../Entity/Tags.js";
 import DoujinInfo from "../Entity/DoujinInfo.js";
 
 import Channels from "../Entity/Channels.js";
+import DistributedWorkers from "../Entity/DistributedWorkers.js";
 
 
 
 const setupSchema = async () => {
   const orm = await MikroORM.init({
-    entities: [  Channels],
+    entities: [  Channels,DistributedWorkers],
     dbName: 'alextay96',
     type: 'postgresql',
     clientUrl: 'postgresql://alextay96@127.0.0.1:5432',
@@ -20,7 +21,6 @@ const setupSchema = async () => {
     password: "Iamalextay96"
   });
   const generator = orm.getSchemaGenerator();
-  await generator.dropSchema();
 
   await generator.createSchema();
 

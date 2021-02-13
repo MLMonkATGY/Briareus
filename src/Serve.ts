@@ -4,16 +4,13 @@ import * as bodyParser from "body-parser";
 import HomeController from "./Controller/Home.Controller.js";
 import GatewayStatusUpdate from "./EventController/GatewayStatusUpdate.Handler.js";
 import DisconnectEventHandler from "./EventController/DisconnectEvent.Handler.js";
-import ScanLocalDeviceJob from "./Jobs/ScanLocalDeviceJob.js";
 import ReceiveDecryptedEvent from "./EventController/ReceiveDecyptedEvent.Handler.js";
 
-import GetThumbnailByAuthor from "./Jobs/GetThmbnailByAuthor.js";
-import DownloadLinksByArtist from "./Jobs/DownloadLinksByArtist.js";
-import PreviewThumbnail from "./Jobs/PreviewThumbnail.js";
-import DownloadThumbnail from "./Jobs/DownloadThumbnail.js";
-import FilterResources from "./Jobs/FilterEmptyFolder.js";
+
 import GenericCrawler from "./Crawler/GenericCrawler.js";
 import ExploreChannels from "./Crawler/ExploreChannels.js";
+import SshScheduler from "./Jobs/SshScheduler.js";
+import DownloadAndSplit from "./Jobs/DownloadVideoAndSplitJob.js";
 
   
 const app: App = new App({
@@ -37,9 +34,10 @@ const app: App = new App({
       // new PreviewThumbnail()
       // new DownloadThumbnail(),
       // new FilterResources()
+      new DownloadAndSplit()
     ],
     crawlerHandler : [
-      new ExploreChannels()
+      // new ExploreChannels()
     ]
   });
 

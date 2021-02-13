@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "ES2020",
     "outDir": "./out",
     "baseUrl": "./src",
     "sourceMap": true,
