@@ -15,5 +15,5 @@ def unzipWorker(item):
         zip_ref.close()  # close file
 
 
-Parallel(n_jobs=-1)(delayed(unzipWorker)(item)
-                    for item in os.listdir(dir_name))
+Parallel(n_jobs=6)(delayed(unzipWorker)(item)
+                   for item in os.listdir(dir_name))

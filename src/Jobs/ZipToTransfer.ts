@@ -62,7 +62,7 @@ class ZipToTransfer implements iRepeatJobBase{
             allP.push(this.runFetch(payload[i],base))
 
             // allP.push(this.runSubProcess(elem))
-            if((i + 1) % 100 == 0){
+            if((i + 1) % 20 == 0){
                 await Promise.all(allP)
                 count += allP.length
                 allP = []
@@ -114,7 +114,7 @@ class ZipToTransfer implements iRepeatJobBase{
             },
         });
         let existedEventData = allDirPath.split("\n")
-        let payloads = _.chunk(existedEventData, 30)
+        let payloads = _.chunk(existedEventData, 300)
         await this.triggerFC(payloads)
         // console.log(allDirPath)
     };
