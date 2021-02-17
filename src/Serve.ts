@@ -11,6 +11,9 @@ import GenericCrawler from "./Crawler/GenericCrawler.js";
 import ExploreChannels from "./Crawler/ExploreChannels.js";
 import SshScheduler from "./Jobs/SshScheduler.js";
 import DownloadAndSplit from "./Jobs/DownloadVideoAndSplitJob.js";
+import UploadEventDataJob from "./Jobs/UploadEventDataJob.js";
+import TriggerFunctionCompute from "./Jobs/TriggerFunctionCompute.js";
+import ZipToTransfer from "./Jobs/ZipToTransfer.js";
 
   
 const app: App = new App({
@@ -34,7 +37,10 @@ const app: App = new App({
       // new PreviewThumbnail()
       // new DownloadThumbnail(),
       // new FilterResources()
-      new DownloadAndSplit()
+      // new DownloadAndSplit()
+      // new UploadEventDataJob()
+      // new TriggerFunctionCompute()
+      new ZipToTransfer()
     ],
     crawlerHandler : [
       // new ExploreChannels()

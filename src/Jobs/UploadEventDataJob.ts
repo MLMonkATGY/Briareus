@@ -5,8 +5,17 @@ import DistributedWorkers from '../Entity/DistributedWorkers.js';
 import SshScheduler from "./SshScheduler.js"
 import fs from "fs";
 import { split } from 'ts-node';
-class DownloadAndSplit implements iRepeatJobBase{
+import recursive from "recursive-readdir";
+class UploadEventDataJob implements iRepeatJobBase{
+    private localEventData : Set<string>;
+    private localEventDataList: Array<string>;
+    private uploadedEventData: Array<string>;
+
     constructor() {
+        this.localEventData = new Set()
+        this.localEventDataList = []
+        this.uploadedEventData = []
+
     }
     public waitFor = async (timeout: number) => {
         return new Promise((resolve, reject) => {
@@ -188,59 +197,84 @@ class DownloadAndSplit implements iRepeatJobBase{
         return distributedWorkloads
     }
 
+    public ignoreFunc = (file, stats) =>{
+    // `file` is the path to the file, and `stats` is an `fs.Stats`
+    // object returned from `fs.lstat()`.
+    return stats.isDirectory()
+    }
+    public localFileResourceWatcher = async()=>{
+        const basePath = "/media/alextay96/Storage/distributed_jobs_payloads"
+        let a = await recursive(basePath)
+        a.forEach(element => {
+            if(  !this.localEventData.has(element)){
+                this.localEventData.add(element)
+                this.localEventDataList.push(element)
+            }   
+
+        });
+        console.log(this.localEventDataList.length)
+
+    }
+    public uploadFile = async(sshConn : NodeSSH, sourceFile, targetDir)=>{
+        await sshConn.putFile(sourceFile, targetDir).catch(err=>{
+            console.log(err)
+        })
+    }
+    public uploadProgressLogger = ()=>{
+        console.log(`Detected file : ${this.localEventData.size}`)
+        console.log(`Pending upload file : ${this.localEventDataList.length}`)
+        console.log(`Successfully uploaded file : ${this.uploadedEventData.length}`)
+        console.log(`Uploaded percentage : ${this.uploadedEventData.length/this.localEventData.size}`)
+
+    }
+    public uploadWorker = async(sshConn : NodeSSH)=>{
+        const parallelUploadNum = 5
+        let allP = []
+        for(let i = 0 ; i < parallelUploadNum ; i++){
+            let source = this.localEventDataList.pop()
+            let pathComp = source.split("/")
+            let filename = pathComp[pathComp.length - 1]
+            let targetDirName = pathComp[pathComp.length - 2] + "_" + filename.split(".")[0]
+            let targetBaseDir = `/mnt/auto/distributed/eventData/${targetDirName}/output.mp4`
+            allP.push(this.uploadFile(sshConn, source,targetBaseDir))
+            this.uploadedEventData.push(source)
+        }
+        await Promise.all(allP)
+    }
     public run =async (runAtStartup: boolean)=>{
         const em = await getEntityManager()
         const repo = em.getRepository<DistributedWorkers>(DistributedWorkers)
-        let allWorkerConnection = await repo.findAll()
-        allWorkerConnection = [allWorkerConnection[0], allWorkerConnection[1]]
-        const payloadFile = "/home/alextay96/Desktop/workspace/3d-eff/Briareus/python-tools/p.txt"
-        // const payloadFile = "/home/alextay96/Desktop/workspace/3d-eff/Briareus/python-tools/coherent-split01.txt"
-
-        let allLines = fs.readFileSync(payloadFile).toString().split("\n").filter(elem=>elem!="")
-        // console.log(allLines)
-        const workload =allLines
-        // console.log(workload)
-        let allWaitingPromise :  Array<Promise<any>> = []
-        let KPI = {}
-        let namedWorks = {}
-        let nameIdMapping = {}
-        allWorkerConnection.forEach((elem, index)=>{
-            nameIdMapping[index] = elem.name
-            KPI[elem.name] = 0
-            namedWorks[elem.name] = index
+        let serverConn = await repo.findOne({name : {
+            $eq : "alicloud"
+        }})
+        const ssh = new NodeSSH()
+        await ssh.connect({
+            host: serverConn.address,
+            username: serverConn.username,
+            port: serverConn.port,
+            password: serverConn.password
+        }).catch(err=>{
+            console.log(`Connection Error ${serverConn.name}`)
+            
         })
-        setInterval(()=>{
-            console.log(KPI)
-        },30000)
-        let previous = 0
-        let fastestData = ""
-        let latest = 0
-        console.log(namedWorks)
-        let schedule = [0,1]
-        let loadBalance  = new Array(workload.length).fill(schedule).flat();
-
-        for(let j = 0 ; j < workload.length ; j++){
-            allWaitingPromise.push(this.promiseInterface(allWorkerConnection[loadBalance[j]], workload[j]))
-            if(j != 0 && (j + 1) % schedule.length == 0){
-                const allResponse =  Promise.all(allWaitingPromise)
-                const wait  = await this.waitFor(8 * 60 * 1000)
-                allWaitingPromise = []
-                console.log("===All clear====")
-            }
+        const basePath = await ssh.exec(`pwd`, [], {
+            cwd: '.',
+            onStdout(chunk) {
+                console.log(chunk.toString('utf8'))
+            },
+            onStderr(chunk) {
+                console.log('stderrChunk', chunk.toString('utf8'))
+            },
+        });
+        await this.localFileResourceWatcher()
+        setInterval(this.localFileResourceWatcher, 10000)
+        setInterval(this.uploadProgressLogger, 10000)
+        
+        while(this.localEventDataList.length > 0){
+            await this.uploadWorker(ssh)
         }
-
-    
-
-        }
-
-        // allWorkerConnection.forEach(async (elem:DistributedWorkers)=>{
-        //     allConnPromise.push(this.initInitialConn(elem))
-        // })
-      
-      
-      
-
+        
     };
 
-
-export default DownloadAndSplit;
+}
+export default UploadEventDataJob;
