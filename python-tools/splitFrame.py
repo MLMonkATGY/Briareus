@@ -5,7 +5,7 @@ import uuid
 if __name__ == '__main__':
     basePath = "/media/alextay96/Storage/classdata_train"
     targetDir = "/media/alextay96/Storage/frames_train"
-    fps = 5
+    fps = 3
     for path in glob.iglob(basePath + '**/**', recursive=True):
         if(path.endswith("mp4")):
             classname = path.split("/")[-2]

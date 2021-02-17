@@ -47,11 +47,15 @@ class DownloadAndSplit implements iRepeatJobBase{
         let downloadedFilename = ""
        
         try {
-
+            let displayCount = 0
             await ssh.exec(`youtube-dl ${payload} -f worst --restrict-filenames -o "%(title)s.%(ext)s"`, [], {
                 cwd: workspacePath,
                 onStdout(chunk) {
-                    // console.log(chunk.toString('utf8'))
+                    displayCount++
+                    if(displayCount %20 == 0){
+                        console.log(chunk.toString('utf8'))
+
+                    }
                 },
                 onStderr(chunk) {
                     // console.log('stderrChunk', chunk.toString('utf8'))
@@ -90,12 +94,47 @@ class DownloadAndSplit implements iRepeatJobBase{
             })
             // await ssh.execCommand(`mkdir ${workspacePath}/payloads`);
             // await this.waitFor(1000)
-
-            await ssh.exec(`ffmpeg -i ${downloadedFilename} -segment_time 00:00:20 -f segment -reset_timestamps 1 ${downloadedFilename}_payloads/output%03d.mp4`, [], {
+            let durationStr = ""
+            await ssh.exec(`ffmpeg -i ${downloadedFilename} 2>&1 | grep Duration | awk '{print $2}' | tr -d ,`, [], {
                 cwd: workspacePath,
                 onStdout(chunk) {
-                    // console.log(chunk.toString('utf8'))
+                    // console.log()
+                    durationStr = chunk.toString('utf8').split(".")[0]
                 },
+                onStderr(chunk) {
+                    // console.log('stderrChunk', chunk.toString('utf8'))
+                },
+            }).catch(err=>{
+                // console.log(err)
+            });
+            let timeComponent = durationStr.split(":").map(elem=>{
+                return Number(elem)
+            })
+            let startTimeStr = "00:20:00"
+            if(timeComponent[0] < 3){
+                let minutes = timeComponent[1] -20
+
+                if(minutes < 0 && timeComponent[0] > 0){
+                    timeComponent[0] -= 1
+                    timeComponent[1] = 60 + timeComponent[1] - 20
+                }
+            }else{
+                startTimeStr = "00:45:00"
+                timeComponent[0] = 2
+                timeComponent[1] = 30
+                
+            }
+            
+            let endTimeString = timeComponent.join(":")
+            console.log(`End time in ${elem.name} vid : ${endTimeString}`)
+            await ssh.exec(`ffmpeg -ss ${startTimeStr} -to ${endTimeString}  -i ${downloadedFilename} -segment_time 00:00:20 -f segment -reset_timestamps 1 ${downloadedFilename}_payloads/output%03d.mp4`, [], {
+                cwd: workspacePath,
+                onStdout(chunk) {
+                    displayCount++
+                    if(displayCount %10 == 0){
+                        console.log(chunk.toString('utf8'))
+
+                    }                },
                 onStderr(chunk) {
                     // console.log('stderrChunk', chunk.toString('utf8'))
                 },
@@ -152,13 +191,14 @@ class DownloadAndSplit implements iRepeatJobBase{
     public run =async (runAtStartup: boolean)=>{
         const em = await getEntityManager()
         const repo = em.getRepository<DistributedWorkers>(DistributedWorkers)
-        const allWorkerConnection = await repo.findAll()
-        let allConnPromise = []
-        const payloadFile = "/home/alextay96/Desktop/workspace/3d-eff/Briareus/python-tools/coherent-split01.txt"
+        let allWorkerConnection = await repo.findAll()
+        allWorkerConnection = [allWorkerConnection[0], allWorkerConnection[1]]
+        const payloadFile = "/home/alextay96/Desktop/workspace/3d-eff/Briareus/python-tools/p.txt"
+        // const payloadFile = "/home/alextay96/Desktop/workspace/3d-eff/Briareus/python-tools/coherent-split01.txt"
+
         let allLines = fs.readFileSync(payloadFile).toString().split("\n").filter(elem=>elem!="")
         // console.log(allLines)
         const workload =allLines
-        const workerNum = 2
         // console.log(workload)
         let allWaitingPromise :  Array<Promise<any>> = []
         let KPI = {}
@@ -171,28 +211,19 @@ class DownloadAndSplit implements iRepeatJobBase{
         })
         setInterval(()=>{
             console.log(KPI)
-        },5000)
+        },30000)
         let previous = 0
         let fastestData = ""
         let latest = 0
         console.log(namedWorks)
-        let schedule = [2, 0, 1, 0, 1, 1, 0 ,1]
+        let schedule = [0,1]
         let loadBalance  = new Array(workload.length).fill(schedule).flat();
 
         for(let j = 0 ; j < workload.length ; j++){
             allWaitingPromise.push(this.promiseInterface(allWorkerConnection[loadBalance[j]], workload[j]))
-            if(j != 0 && (j) % schedule.length == 0){
-                const allResponse = await Promise.all(allWaitingPromise)
-                allResponse.forEach((elem:string)=>{
-                    if(elem.includes("http")){
-                        workload.push(elem)
-                        
-                    }else{
-                        KPI[elem] += 1
-
-                    }
-
-                })
+            if(j != 0 && (j + 1) % schedule.length == 0){
+                const allResponse =  Promise.all(allWaitingPromise)
+                const wait  = await this.waitFor(8 * 60 * 1000)
                 allWaitingPromise = []
                 console.log("===All clear====")
             }

@@ -3,3 +3,4 @@ out/**/*
 thumbnail/
 resources/**
 mikro-orm.config.ts
+cloud/.fun
