@@ -1,0 +1,73 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Transform: 'Aliyun::Serverless-2018-04-03'
+Resources:
+  httpWorker:
+    Type: 'Aliyun::Serverless::Service'
+    Properties:
+      Description: This is httpWorker service
+      Role: >-
+        acs:ram::5138646860170696:role/aliyunfcgeneratedrole-ap-southeast-3-httpworker
+      VpcConfig:
+        VpcId: vpc-8ps7awif0o6g7rehpylsg
+        VSwitchIds:
+          - vsw-8pshgj091bwk02pzf9sxt
+        SecurityGroupId: sg-8psfrqzqztr4srmpqr48
+      NasConfig:
+        UserId: 10003
+        GroupId: 10003
+        MountPoints:
+          - ServerAddr: '1642e44a822-hto60.ap-southeast-3.nas.aliyuncs.com:/httpWorker'
+            MountDir: /mnt/auto
+      InternetAccess: true
+    splitvideo:
+      Type: 'Aliyun::Serverless::Function'
+      Properties:
+        Handler: index.handler
+        Runtime: python3
+        Timeout: 60
+        MemorySize: 512
+        InstanceConcurrency: 1
+        EnvironmentVariables:
+          LD_LIBRARY_PATH: >-
+            /code/.fun/root/usr/local/lib:/code/.fun/root/usr/lib:/code/.fun/root/usr/lib/x86_64-linux-gnu:/code/.fun/root/usr/lib64:/code/.fun/root/lib:/code/.fun/root/lib/x86_64-linux-gnu:/code/.fun/root/python/lib/python2.7/site-packages:/code/.fun/root/python/lib/python3.6/site-packages:/code:/code/lib:/usr/local/lib:/mnt/auto/root/usr/local/lib:/mnt/auto/root/usr/lib:/mnt/auto/root/usr/lib/x86_64-linux-gnu:/mnt/auto/root/usr/lib64:/mnt/auto/root/lib:/mnt/auto/root/lib/x86_64-linux-gnu:/mnt/auto/root/python/lib/python2.7/site-packages:/mnt/auto/root/python/lib/python3.6/site-packages
+          NODE_PATH: >-
+            /code/node_modules:/usr/local/lib/node_modules:/mnt/auto/node_modules
+          PATH: >-
+            /code/.fun/root/usr/local/bin:/code/.fun/root/usr/local/sbin:/code/.fun/root/usr/bin:/code/.fun/root/usr/sbin:/code/.fun/root/sbin:/code/.fun/root/bin:/code:/code/node_modules/.bin:/code/.fun/python/bin:/code/.fun/node_modules/.bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/sbin:/bin:/mnt/auto/root/usr/local/bin:/mnt/auto/root/usr/local/sbin:/mnt/auto/root/usr/bin:/mnt/auto/root/usr/sbin:/mnt/auto/root/sbin:/mnt/auto/root/bin:/mnt/auto/python/bin:/mnt/auto/node_modules/.bin
+          PYTHONPATH: >-
+            /mnt/auto/python/lib/python2.7/site-packages:/mnt/auto/python/lib/python3.6/site-packages
+          PYTHONUSERBASE: /code/.fun/python
+      Events:
+        httpTrigger:
+          Type: HTTP
+          Properties:
+            AuthType: anonymous
+            Methods:
+              - GET
+              - POST
+    zipDir:
+      Type: 'Aliyun::Serverless::Function'
+      Properties:
+        Handler: index.handler
+        Runtime: python3
+        Timeout: 60
+        MemorySize: 512
+        InstanceConcurrency: 1
+        EnvironmentVariables:
+          LD_LIBRARY_PATH: >-
+            /code/.fun/root/usr/local/lib:/code/.fun/root/usr/lib:/code/.fun/root/usr/lib/x86_64-linux-gnu:/code/.fun/root/usr/lib64:/code/.fun/root/lib:/code/.fun/root/lib/x86_64-linux-gnu:/code/.fun/root/python/lib/python2.7/site-packages:/code/.fun/root/python/lib/python3.6/site-packages:/code:/code/lib:/usr/local/lib:/mnt/auto/root/usr/local/lib:/mnt/auto/root/usr/lib:/mnt/auto/root/usr/lib/x86_64-linux-gnu:/mnt/auto/root/usr/lib64:/mnt/auto/root/lib:/mnt/auto/root/lib/x86_64-linux-gnu:/mnt/auto/root/python/lib/python2.7/site-packages:/mnt/auto/root/python/lib/python3.6/site-packages
+          NODE_PATH: >-
+            /code/node_modules:/usr/local/lib/node_modules:/mnt/auto/node_modules
+          PATH: >-
+            /code/.fun/root/usr/local/bin:/code/.fun/root/usr/local/sbin:/code/.fun/root/usr/bin:/code/.fun/root/usr/sbin:/code/.fun/root/sbin:/code/.fun/root/bin:/code:/code/node_modules/.bin:/code/.fun/python/bin:/code/.fun/node_modules/.bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/sbin:/bin:/mnt/auto/root/usr/local/bin:/mnt/auto/root/usr/local/sbin:/mnt/auto/root/usr/bin:/mnt/auto/root/usr/sbin:/mnt/auto/root/sbin:/mnt/auto/root/bin:/mnt/auto/python/bin:/mnt/auto/node_modules/.bin
+          PYTHONPATH: >-
+            /mnt/auto/python/lib/python2.7/site-packages:/mnt/auto/python/lib/python3.6/site-packages
+          PYTHONUSERBASE: /code/.fun/python
+      Events:
+        httpTrigger:
+          Type: HTTP
+          Properties:
+            AuthType: anonymous
+            Methods:
+              - GET
+              - POST
