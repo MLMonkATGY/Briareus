@@ -37,7 +37,7 @@ def handler(event, context):
     payloadBasePath = os.path.join(
         completedTaskBasePath, completedDirName)
     cmd = ['ffmpeg', '-i', vidPath, "-s", "224x224", "-vf",
-           "fps=4",  "{0}/image_%05d.jpg".format(payloadBasePath)]
+           "fps=4", "{0}/image_%05d.jpg".format(payloadBasePath)]
 
     try:
         os.makedirs(payloadBasePath, exist_ok=True)

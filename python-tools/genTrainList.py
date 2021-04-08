@@ -1,7 +1,7 @@
 import os
 from tqdm import tqdm
 if __name__ == '__main__':
-    classDatapath = "/media/alextay96/Storage/frames_train"
+    classDatapath = "/media/alextay96/Storage/frame_train_2"
     allClassDir = os.listdir(classDatapath)
     fullTxtArray = []
     for classIdx, classdir in enumerate(tqdm(allClassDir)):

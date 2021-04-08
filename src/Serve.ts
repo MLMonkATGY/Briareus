@@ -41,6 +41,8 @@ const app: App = new App({
       // new UploadEventDataJob()
       // new TriggerFunctionCompute()
       new ZipToTransfer()
+      // cmd = ['ffmpeg', '-i', vidPath, "-s", "224x224", "-vf",
+      //      "fps=4",  "{0}/image_%05d.jpg".format(payloadBasePath)]
     ],
     crawlerHandler : [
       // new ExploreChannels()
