@@ -10,9 +10,10 @@
             "request": "launch",
             "module": "scrapy",
             "args": [
-                "runspider",
-                "${file}"
+                "crawl",
+                "quotes"
             ],
+            "justMyCode": false,
             "console": "integratedTerminal"
         }
     ]
