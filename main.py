@@ -1,8 +1,7 @@
 def run(i):
     if (i % 2 == 0):
         return True
-    else:
-        return False
+    return False
 
 
 if __name__ == "__main__":
