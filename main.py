@@ -1,7 +1,9 @@
-def run(i):
-    if(i % 2 == 0):
-        return True
-    return False
+def run(x):
+    return x + 1
+
+
+def test_a():
+    assert run(3) == 4
 
 
 if __name__ == "__main__":
