@@ -1,4 +1,0 @@
-RUNTIME python3
-tasks: []
-
-RUN fun-install pip install opencv-python
