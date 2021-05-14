@@ -1,5 +1,5 @@
 def run(i):
-    if (i % 2 == 0):
+    if(i % 2 == 0):
         return True
     return False
 
