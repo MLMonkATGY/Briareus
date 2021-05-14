@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-        ref:'switch-stack'
+        ref:switch-stack
 
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
